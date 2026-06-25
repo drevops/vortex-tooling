@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# Unit tests for download-db-acquia.sh
+# Unit tests for fetch-db-acquia.sh
 #
 # shellcheck disable=SC2030,SC2031,SC2034
 
@@ -9,7 +9,7 @@ load ../_helper.bash
 # Required for the 'run --separate-stderr' flag used in the redaction test.
 bats_require_minimum_version 1.5.0
 
-@test "download-db-acquia: Download database successfully" {
+@test "fetch-db-acquia: Fetch database successfully" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Clean up any existing test files first to force full download workflow
@@ -18,7 +18,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -41,7 +41,7 @@ bats_require_minimum_version 1.5.0
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-789/actions/download # {"url":"https://backup.example.com/db.sql.gz"}'
 
     # Mock file download curl call with its message and side effect to create zipped archive
-    "Downloading database dump into file .data/testdb_backup_backup-id-789.sql.gz."
+    "Fetching database dump into file .data/testdb_backup_backup-id-789.sql.gz."
     '@curl --progress-bar -L https://backup.example.com/db.sql.gz -o .data/testdb_backup_backup-id-789.sql.gz # 0 #  # echo "CREATE TABLE test (id INT);" | gzip > .data/testdb_backup_backup-id-789.sql.gz'
 
     # Mock gunzip operations with their message
@@ -54,19 +54,19 @@ bats_require_minimum_version 1.5.0
     '@mv .data/testdb_backup_backup-id-789.sql .data/db.sql # 0 #  # echo "CREATE TABLE test (id INT);" > .data/db.sql'
 
     # Assert final success message
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
@@ -81,7 +81,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Use cached uncompressed file when available" {
+@test "fetch-db-acquia: Use cached uncompressed file when available" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Create existing uncompressed file
@@ -90,7 +90,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -116,19 +116,19 @@ bats_require_minimum_version 1.5.0
     '@mv .data/testdb_backup_backup-id-123.sql .data/db.sql # 0 #  # echo "cached database content" > .data/db.sql'
 
     # Assert final success message
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
@@ -139,7 +139,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Use cached compressed file when available" {
+@test "fetch-db-acquia: Use cached compressed file when available" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Create existing compressed file
@@ -148,7 +148,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -179,19 +179,19 @@ bats_require_minimum_version 1.5.0
     '@mv .data/testdb_backup_backup-id-456.sql .data/db.sql # 0 #  # echo "decompressed database content" > .data/db.sql'
 
     # Assert final success message
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
@@ -202,12 +202,12 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Use default values for optional variables" {
+@test "fetch-db-acquia: Use default values for optional variables" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -230,7 +230,7 @@ bats_require_minimum_version 1.5.0
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-789/actions/download # {"url":"https://backup.example.com/db.sql.gz"}'
 
     # Mock file download curl call with its message and side effect to create zipped archive
-    "Downloading database dump into file ./.data/testdb_backup_backup-id-789.sql.gz."
+    "Fetching database dump into file ./.data/testdb_backup_backup-id-789.sql.gz."
     '@curl --progress-bar -L https://backup.example.com/db.sql.gz -o ./.data/testdb_backup_backup-id-789.sql.gz # 0 #  # mkdir -p ./.data && echo "database content" | gzip > ./.data/testdb_backup_backup-id-789.sql.gz'
 
     # Mock gunzip operations with their message
@@ -243,19 +243,19 @@ bats_require_minimum_version 1.5.0
     '@mv ./.data/testdb_backup_backup-id-789.sql ./.data/db.sql # 0 #  # echo "database content" > ./.data/db.sql'
 
     # Assert final success message
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  # Don't set VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR and VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE to test defaults
-  unset VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  # Don't set VORTEX_FETCH_DB_ACQUIA_DB_DIR and VORTEX_FETCH_DB_ACQUIA_DB_FILE to test defaults
+  unset VORTEX_FETCH_DB_ACQUIA_DB_DIR VORTEX_FETCH_DB_ACQUIA_DB_FILE
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
@@ -263,29 +263,29 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Authentication failure with error response" {
+@test "fetch-db-acquia: Authentication failure with error response" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message and error response
     "Retrieving authentication token."
     '@curl -s -L https://accounts.acquia.com/api/auth/oauth/token --data-urlencode client_id=invalid-key --data-urlencode client_secret=invalid-secret --data-urlencode grant_type=client_credentials # {"error":"invalid_client","error_description":"Client authentication failed"}'
 
     # Assert authentication failure message
-    "[FAIL] Authentication failed. Check VORTEX_DOWNLOAD_DB_ACQUIA_KEY or VORTEX_ACQUIA_KEY and VORTEX_DOWNLOAD_DB_ACQUIA_SECRET or VORTEX_ACQUIA_SECRET."
+    "[FAIL] Authentication failed. Check VORTEX_FETCH_DB_ACQUIA_KEY or VORTEX_ACQUIA_KEY and VORTEX_FETCH_DB_ACQUIA_SECRET or VORTEX_ACQUIA_SECRET."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="invalid-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="invalid-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="invalid-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="invalid-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -293,12 +293,12 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Application not found" {
+@test "fetch-db-acquia: Application not found" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -312,14 +312,14 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Application 'nonexistent-app' not found. Check application name and access permissions."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="nonexistent-app"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="nonexistent-app"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -327,12 +327,12 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Environment not found" {
+@test "fetch-db-acquia: Environment not found" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -350,14 +350,14 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Environment 'nonexistent-env' not found in application 'testapp'. Check environment name."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="nonexistent-env"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="nonexistent-env"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -365,12 +365,12 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Database not found" {
+@test "fetch-db-acquia: Database not found" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -392,14 +392,14 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Database 'nonexistent-db' not found in environment 'prod'. Check database name."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="nonexistent-db"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="nonexistent-db"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -407,12 +407,12 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: No backups found for database" {
+@test "fetch-db-acquia: No backups found for database" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -434,14 +434,14 @@ bats_require_minimum_version 1.5.0
     "[FAIL] No backups found for database 'testdb' in environment 'prod'. Try creating a backup first."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -449,7 +449,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Create fresh backup when requested" {
+@test "fetch-db-acquia: Create fresh backup when requested" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Clean up any existing test files
@@ -457,10 +457,10 @@ bats_require_minimum_version 1.5.0
   mkdir -p .data
 
   # Create .env.local with the fresh flag
-  echo "VORTEX_DOWNLOAD_DB_FRESH=1" >.env.local
+  echo "VORTEX_FETCH_DB_FRESH=1" >.env.local
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Authentication
     "[TASK] Retrieving authentication token."
@@ -486,7 +486,7 @@ bats_require_minimum_version 1.5.0
     '@sleep 10 # 0'
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/notifications/notification-uuid-123 # {"status":"completed"}'
     "[ OK ] Backup completed successfully."
-    "       Fresh backup will be downloaded."
+    "       Fresh backup will be fetched."
 
     # Continue with normal download flow
     "[TASK] Discovering latest backup ID for database testdb."
@@ -496,7 +496,7 @@ bats_require_minimum_version 1.5.0
     "[TASK] Discovering backup URL."
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-new-123/actions/download # {"url":"https://backup.example.com/db-fresh.sql.gz"}'
 
-    "[TASK] Downloading database dump into file .data/testdb_backup_backup-id-new-123.sql.gz."
+    "[TASK] Fetching database dump into file .data/testdb_backup_backup-id-new-123.sql.gz."
     '@curl --progress-bar -L https://backup.example.com/db-fresh.sql.gz -o .data/testdb_backup_backup-id-new-123.sql.gz # 0 #  # echo "CREATE TABLE fresh (id INT);" | gzip > .data/testdb_backup_backup-id-new-123.sql.gz'
 
     "[TASK] Expanding database file .data/testdb_backup_backup-id-new-123.sql.gz into .data/testdb_backup_backup-id-new-123.sql."
@@ -506,20 +506,20 @@ bats_require_minimum_version 1.5.0
     '[TASK] Renaming file ".data/testdb_backup_backup-id-new-123.sql" to ".data/db.sql".'
     '@mv .data/testdb_backup_backup-id-new-123.sql .data/db.sql # 0 #  # echo "CREATE TABLE fresh (id INT);" > .data/db.sql'
 
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
-  export VORTEX_DOWNLOAD_DB_FRESH="1"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_FRESH="1"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
@@ -530,11 +530,11 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Fresh backup creation fails with API error" {
+@test "fetch-db-acquia: Fresh backup creation fails with API error" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Authentication
     "[TASK] Retrieving authentication token."
@@ -556,17 +556,17 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Failed to create backup for database 'testdb'."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
-  export VORTEX_DOWNLOAD_DB_FRESH="1"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_FRESH="1"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -574,11 +574,11 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Fresh backup creation fails - missing notification URL" {
+@test "fetch-db-acquia: Fresh backup creation fails - missing notification URL" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Authentication
     "[TASK] Retrieving authentication token."
@@ -600,17 +600,17 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Unable to get notification URL for backup creation."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
-  export VORTEX_DOWNLOAD_DB_FRESH="1"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_FRESH="1"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -618,11 +618,11 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Fresh backup fails during creation" {
+@test "fetch-db-acquia: Fresh backup fails during creation" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Authentication
     "[TASK] Retrieving authentication token."
@@ -649,17 +649,17 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Backup creation failed."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
-  export VORTEX_DOWNLOAD_DB_FRESH="1"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_FRESH="1"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -667,11 +667,11 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Fresh backup times out" {
+@test "fetch-db-acquia: Fresh backup times out" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Authentication
     "[TASK] Retrieving authentication token."
@@ -705,19 +705,19 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Backup creation timed out after 15 seconds."
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
-  export VORTEX_DOWNLOAD_DB_FRESH="1"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_BACKUP_MAX_WAIT="15"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_BACKUP_WAIT_INTERVAL="5"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_FRESH="1"
+  export VORTEX_FETCH_DB_ACQUIA_BACKUP_MAX_WAIT="15"
+  export VORTEX_FETCH_DB_ACQUIA_BACKUP_WAIT_INTERVAL="5"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -725,7 +725,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Backup URL discovery fails when response has no URL" {
+@test "fetch-db-acquia: Backup URL discovery fails when response has no URL" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Clean up any existing test files first to force full download workflow
@@ -734,7 +734,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -760,16 +760,16 @@ bats_require_minimum_version 1.5.0
     "[FAIL] Unable to discover backup URL for backup ID 'backup-id-789'. API response: {\"url\":\"\"}"
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -780,7 +780,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Backup URL discovery fails when response is missing the URL field" {
+@test "fetch-db-acquia: Backup URL discovery fails when response is missing the URL field" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Clean up any existing test files first to force full download workflow
@@ -789,7 +789,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -812,16 +812,16 @@ bats_require_minimum_version 1.5.0
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-789/actions/download # {"message":"Resource not found"}'
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -832,7 +832,7 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Backup URL discovery fails with malformed JSON response" {
+@test "fetch-db-acquia: Backup URL discovery fails with malformed JSON response" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   # Clean up any existing test files first to force full download workflow
@@ -841,7 +841,7 @@ bats_require_minimum_version 1.5.0
 
   declare -a STEPS=(
     # Assert initial message
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     # Mock authentication token curl call with its message
     "Retrieving authentication token."
@@ -864,16 +864,16 @@ bats_require_minimum_version 1.5.0
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-789/actions/download # Internal Server Error'
   )
 
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run .vortex/tooling/src/download-db-acquia
+  run .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_failure
@@ -884,14 +884,14 @@ bats_require_minimum_version 1.5.0
   popd >/dev/null
 }
 
-@test "download-db-acquia: Redact token in debug output" {
+@test "fetch-db-acquia: Redact token in debug output" {
   pushd "${LOCAL_REPO_DIR}" >/dev/null || exit 1
 
   rm -rf .data
   mkdir -p .data
 
   declare -a STEPS=(
-    "[INFO] Started database dump download from Acquia."
+    "[INFO] Started database dump fetch from Acquia."
 
     "Retrieving authentication token."
     '@curl -s -L https://accounts.acquia.com/api/auth/oauth/token --data-urlencode client_id=test-key --data-urlencode client_secret=test-secret --data-urlencode grant_type=client_credentials # {"access_token":"test-token", "expires_in":3600}'
@@ -908,7 +908,7 @@ bats_require_minimum_version 1.5.0
     "Discovering backup URL."
     '@curl -s -L -H Accept: application/json, version=2 -H Authorization: Bearer test-token https://cloud.acquia.com/api/environments/env-id-456/databases/testdb/backups/backup-id-789/actions/download # {"url":"https://backup.example.com/db.sql.gz"}'
 
-    "Downloading database dump into file .data/testdb_backup_backup-id-789.sql.gz."
+    "Fetching database dump into file .data/testdb_backup_backup-id-789.sql.gz."
     '@curl --progress-bar -L https://backup.example.com/db.sql.gz -o .data/testdb_backup_backup-id-789.sql.gz # 0 #  # echo "CREATE TABLE test (id INT);" | gzip > .data/testdb_backup_backup-id-789.sql.gz'
 
     "Expanding database file .data/testdb_backup_backup-id-789.sql.gz into .data/testdb_backup_backup-id-789.sql."
@@ -918,20 +918,20 @@ bats_require_minimum_version 1.5.0
     'Renaming file ".data/testdb_backup_backup-id-789.sql" to ".data/db.sql".'
     '@mv .data/testdb_backup_backup-id-789.sql .data/db.sql # 0 #  # echo "CREATE TABLE test (id INT);" > .data/db.sql'
 
-    "[ OK ] Finished database dump download from Acquia."
+    "[ OK ] Finished database dump fetch from Acquia."
   )
 
   export VORTEX_DEBUG=1
-  export VORTEX_DOWNLOAD_DB_ACQUIA_KEY="test-key"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_SECRET="test-secret"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_APP_NAME="testapp"
-  export VORTEX_DOWNLOAD_DB_ENVIRONMENT="prod"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_NAME="testdb"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_DIR=".data"
-  export VORTEX_DOWNLOAD_DB_ACQUIA_DB_FILE="db.sql"
+  export VORTEX_FETCH_DB_ACQUIA_KEY="test-key"
+  export VORTEX_FETCH_DB_ACQUIA_SECRET="test-secret"
+  export VORTEX_FETCH_DB_ACQUIA_APP_NAME="testapp"
+  export VORTEX_FETCH_DB_ENVIRONMENT="prod"
+  export VORTEX_FETCH_DB_ACQUIA_DB_NAME="testdb"
+  export VORTEX_FETCH_DB_ACQUIA_DB_DIR=".data"
+  export VORTEX_FETCH_DB_ACQUIA_DB_FILE="db.sql"
 
   mocks="$(run_steps "setup")"
-  run --separate-stderr .vortex/tooling/src/download-db-acquia
+  run --separate-stderr .vortex/tooling/src/fetch-db-acquia
   run_steps "assert" "${mocks}"
 
   assert_success
