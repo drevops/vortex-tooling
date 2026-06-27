@@ -180,6 +180,26 @@ class DeployTest extends UnitTestCase {
     $this->assertStringContainsString('[ OK ] Finished deployment.', $output);
   }
 
+  public function testDeployContainerRegistryOnly(): void {
+    $this->envSet('VORTEX_DEPLOY_TYPES', 'container_registry');
+
+    $this->mockPassthru([
+      'cmd' => $this->getDeployContainerRegistryPath(),
+      'output' => 'Container registry deployed successfully',
+      'result_code' => 0,
+    ]);
+
+    $this->mockQuit(0);
+
+    $this->expectException(QuitSuccessException::class);
+
+    $output = $this->runScript('src/deploy');
+
+    $this->assertStringContainsString('[INFO] Started deployment.', $output);
+    $this->assertStringContainsString('Container registry deployed successfully', $output);
+    $this->assertStringContainsString('[ OK ] Finished deployment.', $output);
+  }
+
   public function testDeployLagoonOnly(): void {
     $this->envSet('VORTEX_DEPLOY_TYPES', 'lagoon');
 
@@ -201,7 +221,7 @@ class DeployTest extends UnitTestCase {
   }
 
   public function testDeployMultipleTypes(): void {
-    $this->envSet('VORTEX_DEPLOY_TYPES', 'artifact,webhook,lagoon');
+    $this->envSet('VORTEX_DEPLOY_TYPES', 'artifact,webhook,container_registry');
 
     $this->mockPassthru([
       'cmd' => $this->getDeployArtifactPath(),
@@ -216,8 +236,8 @@ class DeployTest extends UnitTestCase {
     ]);
 
     $this->mockPassthru([
-      'cmd' => $this->getDeployLagoonPath(),
-      'output' => 'Lagoon deployed',
+      'cmd' => $this->getDeployContainerRegistryPath(),
+      'output' => 'Container registry deployed',
       'result_code' => 0,
     ]);
 
@@ -230,7 +250,7 @@ class DeployTest extends UnitTestCase {
     $this->assertStringContainsString('[INFO] Started deployment.', $output);
     $this->assertStringContainsString('Artifact deployed', $output);
     $this->assertStringContainsString('Webhook deployed', $output);
-    $this->assertStringContainsString('Lagoon deployed', $output);
+    $this->assertStringContainsString('Container registry deployed', $output);
     $this->assertStringContainsString('[ OK ] Finished deployment.', $output);
   }
 
@@ -300,6 +320,26 @@ class DeployTest extends UnitTestCase {
     $this->assertStringContainsString('Webhook deployment failed', $output);
   }
 
+  public function testDeployContainerRegistryFailure(): void {
+    $this->envSet('VORTEX_DEPLOY_TYPES', 'container_registry');
+
+    $this->mockPassthru([
+      'cmd' => $this->getDeployContainerRegistryPath(),
+      'output' => 'Container registry deployment failed',
+      'result_code' => 1,
+    ]);
+
+    $this->mockQuit(1);
+
+    $this->expectException(QuitErrorException::class);
+    $this->expectExceptionCode(1);
+
+    $output = $this->runScript('src/deploy');
+
+    $this->assertStringContainsString('[INFO] Started deployment.', $output);
+    $this->assertStringContainsString('Container registry deployment failed', $output);
+  }
+
   public function testDeployLagoonFailure(): void {
     $this->envSet('VORTEX_DEPLOY_TYPES', 'lagoon');
 
@@ -326,6 +366,10 @@ class DeployTest extends UnitTestCase {
 
   protected function getDeployWebhookPath(): string {
     return (string) realpath(__DIR__ . '/../../src/deploy-webhook');
+  }
+
+  protected function getDeployContainerRegistryPath(): string {
+    return (string) realpath(__DIR__ . '/../../src/deploy-container-registry');
   }
 
   protected function getDeployLagoonPath(): string {

@@ -24,8 +24,7 @@ class ExportDbTest extends UnitTestCase {
 
     $this->envSet('VORTEX_EXPORT_DB_IMAGE', '');
     $this->envUnset('VORTEX_DB_IMAGE');
-    $this->envSet('VORTEX_EXPORT_DB_CONTAINER_REGISTRY_PUSH_PROCEED', '0');
-    $this->envUnset('RUN_ON_HOST');
+    $this->envSet('VORTEX_EXPORT_DB_CONTAINER_REGISTRY_DEPLOY_PROCEED', '0');
 
     $GLOBALS['argv'] = ['export-db'];
   }
@@ -127,15 +126,16 @@ class ExportDbTest extends UnitTestCase {
         },
         'expected' => ['Started database export.', 'Finished database export.'],
       ],
-      'container file export' => [
+      'image export with registry deploy' => [
         'before' => function (self $test): void {
-          $test->envSet('RUN_ON_HOST', '0');
-          $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-file ',
-            'result_code' => 0,
+          $test->envSet('VORTEX_EXPORT_DB_IMAGE', 'myorg/mydb');
+          $test->envSet('VORTEX_EXPORT_DB_CONTAINER_REGISTRY_DEPLOY_PROCEED', '1');
+          $test->mockPassthruMultiple([
+            ['cmd' => self::$srcDir . '/export-db-image ', 'result_code' => 0],
+            ['cmd' => self::$srcDir . '/deploy-container-registry', 'result_code' => 0],
           ]);
         },
-        'expected' => ['Started database export.', 'Finished database export.'],
+        'expected' => ['Finished database export.'],
       ],
     ];
   }
@@ -168,15 +168,16 @@ class ExportDbTest extends UnitTestCase {
         },
         'expected' => 'Failed to export database as image',
       ],
-      'container file export fails' => [
+      'registry deploy fails' => [
         'before' => function (self $test): void {
-          $test->envSet('RUN_ON_HOST', '0');
-          $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-file ',
-            'result_code' => 1,
+          $test->envSet('VORTEX_EXPORT_DB_IMAGE', 'myorg/mydb');
+          $test->envSet('VORTEX_EXPORT_DB_CONTAINER_REGISTRY_DEPLOY_PROCEED', '1');
+          $test->mockPassthruMultiple([
+            ['cmd' => self::$srcDir . '/export-db-image ', 'result_code' => 0],
+            ['cmd' => self::$srcDir . '/deploy-container-registry', 'result_code' => 1],
           ]);
         },
-        'expected' => 'Failed to export database as file',
+        'expected' => 'Failed to deploy container image',
       ],
     ];
   }

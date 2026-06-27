@@ -80,23 +80,6 @@ class ResetTest extends UnitTestCase {
         ],
       ],
 
-      'legacy hard positional is ignored' => [
-        [],
-        [
-          ['cmd' => $rm_web, 'result_code' => 0],
-          ['cmd' => $rm_node, 'result_code' => 0],
-        ],
-        [
-          '* [INFO] Started reset.',
-          '* [ OK ] Finished reset.',
-          '! [TASK] Changing permissions',
-          '! [TASK] Resetting repository files.',
-          '! [TASK] Removing all untracked files.',
-          '! [TASK] Removing empty directories.',
-        ],
-        ['reset', 'hard'],
-      ],
-
       'hard' => [
         [],
         [
@@ -115,7 +98,7 @@ class ResetTest extends UnitTestCase {
           '* [TASK] Removing empty directories.',
           '* [ OK ] Finished reset.',
         ],
-        ['reset', '--hard'],
+        ['reset', 'hard'],
       ],
 
       'hard git reset fails' => [
@@ -131,7 +114,7 @@ class ResetTest extends UnitTestCase {
           '* [TASK] Resetting repository files.',
           '! [ OK ] Finished reset.',
         ],
-        ['reset', '--hard'],
+        ['reset', 'hard'],
         TRUE,
       ],
 
@@ -149,7 +132,7 @@ class ResetTest extends UnitTestCase {
           '* [TASK] Removing all untracked files.',
           '! [ OK ] Finished reset.',
         ],
-        ['reset', '--hard'],
+        ['reset', 'hard'],
         TRUE,
       ],
 
