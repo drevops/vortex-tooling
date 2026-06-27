@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
 #[Group('scripts')]
-class ExportDbTest extends UnitTestCase {
+class ImportDbTest extends UnitTestCase {
 
   /**
    * Path to the src directory.
@@ -22,18 +22,15 @@ class ExportDbTest extends UnitTestCase {
 
     self::$srcDir = (string) realpath(__DIR__ . '/../../src');
 
-    $this->envSet('VORTEX_EXPORT_DB_IMAGE', '');
-    $this->envUnset('VORTEX_DB_IMAGE');
-    $this->envSet('VORTEX_EXPORT_DB_CONTAINER_REGISTRY_PUSH_PROCEED', '0');
     $this->envUnset('RUN_ON_HOST');
 
-    $GLOBALS['argv'] = ['export-db'];
+    $GLOBALS['argv'] = ['import-db'];
   }
 
   /**
    * Override to make $argv available in the require'd scope.
    *
-   * The export-db script uses bare $argv (not $GLOBALS['argv']), which is
+   * The import-db script uses bare $argv (not $GLOBALS['argv']), which is
    * only available in the global scope. When require'd inside a function,
    * we need to define it as a local variable.
    */
@@ -99,7 +96,7 @@ class ExportDbTest extends UnitTestCase {
   public function testSuccess(\Closure $before, array $expected): void {
     $before($this);
 
-    $output = $this->runScript('src/export-db');
+    $output = $this->runScript('src/import-db');
 
     foreach ($expected as $str) {
       $this->assertStringContainsString($str, $output);
@@ -108,34 +105,46 @@ class ExportDbTest extends UnitTestCase {
 
   public static function dataProviderSuccess(): array {
     return [
-      'file export' => [
-        'before' => function (self $test): void {
-          $test->mockPassthru([
-            'cmd' => 'docker compose exec -T cli php /export-db-file ',
-            'result_code' => 0,
-          ]);
-        },
-        'expected' => ['Started database export.', 'Finished database export.'],
-      ],
-      'image export' => [
-        'before' => function (self $test): void {
-          $test->envSet('VORTEX_EXPORT_DB_IMAGE', 'myorg/mydb');
-          $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-image ',
-            'result_code' => 0,
-          ]);
-        },
-        'expected' => ['Started database export.', 'Finished database export.'],
-      ],
-      'container file export' => [
+      'container file import' => [
         'before' => function (self $test): void {
           $test->envSet('RUN_ON_HOST', '0');
           $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-file ',
+            'cmd' => self::$srcDir . '/import-db-file ',
             'result_code' => 0,
           ]);
         },
-        'expected' => ['Started database export.', 'Finished database export.'],
+        'expected' => ['Started database import.', 'Finished database import.'],
+      ],
+      'host file import' => [
+        'before' => function (self $test): void {
+          $test->envSet('RUN_ON_HOST', '1');
+          $test->mockPassthru([
+            'cmd' => 'docker compose exec -T cli php /import-db-file ',
+            'result_code' => 0,
+          ]);
+        },
+        'expected' => ['Started database import.', 'Finished database import.'],
+      ],
+      'host file import with detected docker' => [
+        'before' => function (self $test): void {
+          $test->mockCommandExists();
+          $test->mockPassthru([
+            'cmd' => 'docker compose exec -T cli php /import-db-file ',
+            'result_code' => 0,
+          ]);
+        },
+        'expected' => ['Started database import.', 'Finished database import.'],
+      ],
+      'host file import with argument' => [
+        'before' => function (self $test): void {
+          $test->envSet('RUN_ON_HOST', '1');
+          $GLOBALS['argv'] = ['import-db', '.data/db_custom.sql'];
+          $test->mockPassthru([
+            'cmd' => "docker compose exec -T cli php /import-db-file '.data/db_custom.sql'",
+            'result_code' => 0,
+          ]);
+        },
+        'expected' => ['Started database import.', 'Finished database import.'],
       ],
     ];
   }
@@ -144,39 +153,30 @@ class ExportDbTest extends UnitTestCase {
   public function testError(\Closure $before, string $expected): void {
     $before($this);
 
-    $this->runScriptError('src/export-db', $expected);
+    $this->runScriptError('src/import-db', $expected);
   }
 
   public static function dataProviderError(): array {
     return [
-      'file export fails' => [
-        'before' => function (self $test): void {
-          $test->mockPassthru([
-            'cmd' => 'docker compose exec -T cli php /export-db-file ',
-            'result_code' => 1,
-          ]);
-        },
-        'expected' => 'Failed to export database as file',
-      ],
-      'image export fails' => [
-        'before' => function (self $test): void {
-          $test->envSet('VORTEX_EXPORT_DB_IMAGE', 'myorg/mydb');
-          $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-image ',
-            'result_code' => 1,
-          ]);
-        },
-        'expected' => 'Failed to export database as image',
-      ],
-      'container file export fails' => [
+      'container file import fails' => [
         'before' => function (self $test): void {
           $test->envSet('RUN_ON_HOST', '0');
           $test->mockPassthru([
-            'cmd' => self::$srcDir . '/export-db-file ',
+            'cmd' => self::$srcDir . '/import-db-file ',
             'result_code' => 1,
           ]);
         },
-        'expected' => 'Failed to export database as file',
+        'expected' => 'Failed to import database from file',
+      ],
+      'host file import fails' => [
+        'before' => function (self $test): void {
+          $test->envSet('RUN_ON_HOST', '1');
+          $test->mockPassthru([
+            'cmd' => 'docker compose exec -T cli php /import-db-file ',
+            'result_code' => 1,
+          ]);
+        },
+        'expected' => 'Failed to import database from file',
       ],
     ];
   }
