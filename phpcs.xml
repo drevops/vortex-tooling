@@ -16,6 +16,7 @@
     <file>check-no-exit.php</file>
     <file>playground</file>
     <file>src/vortex-check-worktree-changes</file>
+    <file>src/vortex-convert-audit-sarif</file>
     <file>src/vortex-deploy-artifact</file>
     <file>src/vortex-deploy-lagoon</file>
     <file>src/vortex-deploy-webhook</file>
@@ -32,6 +33,7 @@
     <file>src/vortex-provision</file>
     <file>src/vortex-push-container-registry</file>
     <file>src/vortex-setup-ssh</file>
+    <file>src/vortex-storybook</file>
     <file>src</file>
     <file>tests</file>
 
